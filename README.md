@@ -1,41 +1,36 @@
 # 🧠 Marthen AI
 
-Marthen, tamamen yerel tarayıcı tabanlı (offline) çalışan, gizlilik odaklı kişisel yapay zeka asistanıdır.
+Marthen, profesyonel Python backend desteğiyle bilgisayarınızda çalışan, gizlilik odaklı kişisel yapay zeka asistanıdır.
 
-## 🚀 Proje Durumu (v0.1)
+## 🚀 Proje Durumu (v0.2)
 
-Bu proje şu anda geliştirme aşamasındadır.
-- **Arayüz:** Modern, karanlık modlu, cam efektli (glassmorphism) React arayüzü.
-- **Zeka:** `Transformers.js` kütüphanesi ve `LaMini-Flan-T5` modeli kullanılarak tarayıcı içinde yerel olarak çalışır.
-- **Bağımsızlık:** Herhangi bir API anahtarı (OpenAI, Google) gerektirmez. İnternetsiz çalışabilir.
+Marthen artık iki parçalı profesyonel bir mimariye sahip:
+- **Frontend (React):** Modern, cam efektli kullanıcı arayüzü.
+- **Backend (Python/FastAPI):** Yapay zeka modellerini (Llama 3, Gemma vb.) yöneten güçlü motor.
+- **Donanım Hızlandırma:** Mac cihazlarda GPU/Metal desteği.
 
 ## 🛠️ Kurulum ve Çalıştırma
 
-Projeyi bilgisayarınızda tekrar başlatmak için:
+Projeyi çalıştırmak için iki terminal kullanmanız gerekir:
 
-1. Terminali açın:
-   ```bash
-   cd MarthenAI
-   ```
+### 1. Backend'i Başlatın (Termial 1)
+```bash
+cd MarthenAI
+npm run backend
+```
 
-2. Gerekli paketleri (eğer yeni indirdiyseniz) yükleyin:
-   ```bash
-   npm install
-   ```
+### 2. Frontend'i Başlatın (Terminal 2)
+```bash
+cd MarthenAI
+npm run dev
+```
 
-3. Uygulamayı başlatın:
-   ```bash
-   npm run dev
-   ```
-
-4. Tarayıcıda şu adrese gidin: `http://localhost:5173`
-
-## 🔮 Gelecek Planları
-
-- [ ] Sesli yanıt sistemi
-- [ ] Daha büyük ve akıllı yerel modeller (Llama, Gemma vb.)
-- [ ] Dosya okuma ve özetleme yeteneği
-- [ ] Kişiselleştirilebilir hafıza
+### 🧠 Zeka Desteği (Önerilen)
+Marthen'in en akıllı halini kullanmak için:
+1. [Ollama](https://ollama.com) indirin ve kurun.
+2. Terminalden istediğiniz bir modeli indirin: `ollama run llama3`
+3. Marthen artık otomatik olarak bu modelle konuşacaktır.
 
 ---
 *Geliştirici: mthnay & Antigravity*
+

@@ -1,48 +1,32 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import './App.css'
+
+const API_URL = 'http://localhost:8000';
 
 function App() {
   const [messages, setMessages] = useState([
-    { role: 'assistant', content: 'Merhaba! Ben Marthen. Kendi bilgisayarında çalışan, tamamen sana ait yerel yapay zekanım. İlk kurulum için bir şey yazman yeterli (Biraz zaman alabilir)!' }
+    { role: 'assistant', content: 'Merhaba! Ben Marthen. Python tabanlı yeni beynimle artık çok daha güçlüyüm. Nasıl yardımcı olabilirim?' }
   ]);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const [isModelLoading, setIsModelLoading] = useState(false);
+  const [backendStatus, setBackendStatus] = useState('checking');
   const messagesEndRef = useRef(null);
 
-  // Worker referansı
-  const worker = useRef(null);
-
+  // Backend durumunu kontrol et
   useEffect(() => {
-    // Worker'ı başlat
-    if (!worker.current) {
-      // Worker public klasöründen çağrılıyor
-      worker.current = new Worker('/worker.js', {
-        type: 'module'
-      });
-    }
-
-    // Worker'dan gelen mesajları dinle
-    const onMessageReceived = (e) => {
-      const { status, output, error } = e.data;
-
-      if (status === 'complete') {
-        const aiResponse = output || "Anlamadım, tekrar eder misin?";
-        setMessages(prev => [...prev, { role: 'assistant', content: aiResponse }]);
-        setIsTyping(false);
-        setIsModelLoading(false);
-      } else if (status === 'error') {
-        setMessages(prev => [...prev, { role: 'assistant', content: "Bir hata oluştu: " + error }]);
-        setIsTyping(false);
-        setIsModelLoading(false);
+    const checkBackend = async () => {
+      try {
+        const res = await fetch(`${API_URL}/`);
+        if (res.ok) setBackendStatus('online');
+        else setBackendStatus('offline');
+      } catch (e) {
+        setBackendStatus('offline');
       }
     };
 
-    worker.current.addEventListener('message', onMessageReceived);
-
-    return () => {
-      worker.current.removeEventListener('message', onMessageReceived);
-    }
+    checkBackend();
+    const interval = setInterval(checkBackend, 5000);
+    return () => clearInterval(interval);
   }, []);
 
   const scrollToBottom = () => {
@@ -62,17 +46,27 @@ function App() {
     setInput('');
     setIsTyping(true);
 
-    // İlk mesajda kullanıcıyı bilgilendir
-    if (!isModelLoading && messages.length === 1) {
-      setIsModelLoading(true);
+    try {
+      const response = await fetch(`${API_URL}/api/chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: [...messages, userMessage],
+        }),
+      });
+
+      if (!response.ok) throw new Error('Backend yanıt vermedi');
+
+      const data = await response.json();
+      setMessages(prev => [...prev, { role: 'assistant', content: data.content }]);
+    } catch (error) {
       setMessages(prev => [...prev, {
         role: 'assistant',
-        content: "🧠 Beynim yükleniyor... Bu işlem ilk seferde 1-2 dakika sürebilir, lütfen tarayıcıyı kapatma."
+        content: "Üzgünüm, Python beynime bağlanırken bir sorun oluştu. Lütfen backend'in çalıştığından emin ol."
       }]);
+    } finally {
+      setIsTyping(false);
     }
-
-    // Mesajı worker'a gönder
-    worker.current.postMessage({ text: input });
   };
 
   return (
@@ -84,15 +78,18 @@ function App() {
             <div className="logo-icon">M</div>
             <h1>Marthen</h1>
           </div>
-          <button className="new-chat-btn">+ Yeni Sohbet</button>
+          <button className="new-chat-btn" onClick={() => setMessages([{ role: 'assistant', content: 'Yeni sohbet başladı. Sana nasıl yardımcı olabilirim?' }])}>
+            + Yeni Sohbet
+          </button>
         </div>
 
         <div className="history-section">
           <p className="section-title">Durum</p>
-          <div className={`history-item ${isModelLoading ? 'active' : ''}`}>
-            {isModelLoading ? '🟡 Model Yükleniyor' : '🟢 Hazır'}
+          <div className={`history-item ${backendStatus}`}>
+            {backendStatus === 'online' ? '🟢 Python Backend Aktif' :
+              backendStatus === 'checking' ? '🟡 Kontrol Ediliyor...' : '🔴 Backend Kapalı'}
           </div>
-          <div className="history-item">Yerel Zeka (Offline)</div>
+          <div className="history-item">Profesyonel Mod (Python)</div>
         </div>
 
         <div className="sidebar-footer">
@@ -107,7 +104,7 @@ function App() {
       <main className="main-content">
         <header className="chat-header">
           <div className="model-selector">
-            <span>Marthen Local (LaMini-Flan-T5)</span>
+            <span>Marthen Engine (Python Backend)</span>
           </div>
         </header>
 
@@ -124,7 +121,7 @@ function App() {
               </div>
             </div>
           ))}
-          {isTyping && !isModelLoading && (
+          {isTyping && (
             <div className="message-wrapper assistant">
               <div className="message-content">
                 <div className="message-avatar">M</div>
@@ -141,19 +138,19 @@ function App() {
           <form className="input-wrapper" onSubmit={handleSend}>
             <input
               type="text"
-              placeholder={isModelLoading ? "Beyin yükleniyor..." : "Marthen'e yerel olarak sor..."}
+              placeholder={backendStatus === 'online' ? "Marthen'e sor..." : "Backend başlatılıyor..."}
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              disabled={isModelLoading}
+              disabled={backendStatus !== 'online' || isTyping}
             />
-            <button type="submit" disabled={!input.trim() || isModelLoading}>
+            <button type="submit" disabled={!input.trim() || backendStatus !== 'online' || isTyping}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
             </button>
           </form>
-          <p className="input-footer">Marthen tamamen senin cihazında çalışır. Verilerin dışarı çıkmaz.</p>
+          <p className="input-footer">Marthen Python Backend üzerinde çalışıyor. Donanım hızlandırma aktif.</p>
         </div>
       </main>
     </div>
@@ -161,3 +158,4 @@ function App() {
 }
 
 export default App
+

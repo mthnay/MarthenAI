@@ -9,3 +9,5 @@ sentence-transformers
 torch
 transformers
 accelerate
+llama-cpp-python
+huggingface_hub
